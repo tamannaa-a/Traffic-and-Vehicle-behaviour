@@ -20,7 +20,7 @@ def load_data(file):
     st.write("📌 Detected columns:", df.columns.tolist())  # Debug: show available columns
 
     # Required columns
-    required_cols = ['City', 'Traffic Density', 'Speed', 'Vehicle Count', 'Hour Of Day', 'Energy Consumption']
+    required_cols = ['City', 'Traffic Density', 'Speed', 'Hour Of Day', 'Energy Consumption']
     missing_cols = [col for col in required_cols if col not in df.columns]
     if missing_cols:
         st.error(f"❌ Your CSV is missing the following columns: {missing_cols}")
@@ -49,11 +49,11 @@ if uploaded_file is not None:
     df['Weight'] = df['Traffic Density'].map(density_map)
 
     with st.expander("🔍 Preview Data"):
-        st.dataframe(df[['City', 'Traffic Density', 'Speed', 'Vehicle Count', 'Latitude', 'Longitude']])
+        st.dataframe(df[['City', 'Traffic Density', 'Speed', 'Hour Of Day', 'Energy Consumption', 'Latitude', 'Longitude']])
 
     # ML Prediction
     st.subheader("🤖 Predict Traffic Density")
-    features = ['Speed', 'Vehicle Count', 'Hour Of Day', 'Energy Consumption']
+    features = ['Speed', 'Hour Of Day', 'Energy Consumption']
     X = df[features]
     y = df['Traffic Density']
 
@@ -90,4 +90,4 @@ if uploaded_file is not None:
 
     folium_static(m)
 else:
-    st.warning("Please upload a valid CSV file with required columns including City, Traffic Density, Speed, Vehicle Count, Hour Of Day, and Energy Consumption.")
+    st.warning("Please upload a valid CSV file with required columns including City, Traffic Density, Speed, Hour Of Day, and Energy Consumption.")
