@@ -4,57 +4,60 @@ import folium
 from folium.plugins import HeatMap
 from streamlit_folium import folium_static
 
-st.set_page_config(page_title="🚦 Traffic Density Map", layout="wide")
-st.title("🗺️ Real-Time Traffic Density Visualizer")
+st.set_page_config(page_title="📍 Traffic Density Map", layout="wide")
+st.title("🚦 Traffic Density Visualization from Dataset")
 
-# Upload section
-uploaded_file = st.file_uploader("📁 Upload CSV with Latitude, Longitude & Density columns", type=["csv"])
+# Load the static dataset (dt.csv)
+@st.cache_data
+def load_data():
+    df = pd.read_csv("dt.csv")
 
-with st.expander("📌 CSV Format Instructions"):
-    st.markdown("""
-    Ensure your CSV contains the following columns:
-    - **Location**: Any location name (optional but useful for popup)
-    - **Latitude**: Decimal latitude
-    - **Longitude**: Decimal longitude
-    - **Density**: One of ['Low', 'Medium', 'High']
-    """)
+    # Map simulated GPS coordinates by city
+    city_to_coords = {
+        'New York': (40.7128, -74.0060),
+        'Los Angeles': (34.0522, -118.2437),
+        'Chicago': (41.8781, -87.6298),
+        'Houston': (29.7604, -95.3698),
+        'San Francisco': (37.7749, -122.4194)
+    }
 
-if uploaded_file is not None:
-    df = pd.read_csv(uploaded_file)
+    df['Latitude'] = df['City'].map(lambda x: city_to_coords.get(x, (None, None))[0])
+    df['Longitude'] = df['City'].map(lambda x: city_to_coords.get(x, (None, None))[1])
 
-    # Validate columns
-    required_cols = ['Location', 'Latitude', 'Longitude', 'Density']
-    if not all(col in df.columns for col in required_cols):
-        st.error(f"Missing columns. Required: {', '.join(required_cols)}")
-    else:
-        st.success("✅ File successfully uploaded!")
+    return df.dropna(subset=['Latitude', 'Longitude'])
 
-        # Density to weight & color
-        density_map = {'Low': 1, 'Medium': 2, 'High': 3}
-        color_map = {'Low': 'green', 'Medium': 'orange', 'High': 'red'}
-        df['Weight'] = df['Density'].map(density_map)
+# Load data
+df = load_data()
 
-        # Create map centered on average location
-        m = folium.Map(location=[df['Latitude'].mean(), df['Longitude'].mean()], zoom_start=13)
+# Map density to visual features
+density_map = {'Low': 1, 'Medium': 2, 'High': 3}
+color_map = {'Low': 'green', 'Medium': 'orange', 'High': 'red'}
+df['Weight'] = df['Traffic Density'].map(density_map)
 
-        # Add HeatMap
-        heat_data = [[row['Latitude'], row['Longitude'], row['Weight']] for _, row in df.iterrows()]
-        HeatMap(heat_data, radius=20, blur=15, min_opacity=0.4).add_to(m)
+# Show data preview
+with st.expander("🔍 Preview Dataset"):
+    st.dataframe(df[['City', 'Latitude', 'Longitude', 'Traffic Density', 'Speed']])
 
-        # Add color-coded markers
-        for _, row in df.iterrows():
-            folium.CircleMarker(
-                location=(row['Latitude'], row['Longitude']),
-                radius=10,
-                color=color_map[row['Density']],
-                fill=True,
-                fill_color=color_map[row['Density']],
-                fill_opacity=0.8,
-                popup=f"{row['Location']} - {row['Density']} Traffic"
-            ).add_to(m)
+# Create map
+m = folium.Map(location=[39.8283, -98.5795], zoom_start=4)
 
-        # Display map
-        st.subheader("🔍 Interactive Traffic Density Map")
-        folium_static(m)
-else:
-    st.info("Upload a CSV to visualize traffic density on the map.")
+# Heatmap Layer
+heat_data = [[row['Latitude'], row['Longitude'], row['Weight']] for _, row in df.iterrows()]
+HeatMap(heat_data, radius=15, blur=10, min_opacity=0.3).add_to(m)
+
+# Marker Layer
+for _, row in df.iterrows():
+    folium.CircleMarker(
+        location=(row['Latitude'], row['Longitude']),
+        radius=6,
+        color=color_map[row['Traffic Density']],
+        fill=True,
+        fill_opacity=0.9,
+        popup=f"{row['City']} - {row['Traffic Density']} Traffic"
+    ).add_to(m)
+
+# Display map
+st.subheader("🗺️ Interactive Traffic Map")
+folium_static(m)
+
+st.caption("Data sourced from dt.csv | GPS is simulated based on city")
