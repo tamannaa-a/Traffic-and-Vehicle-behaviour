@@ -7,6 +7,17 @@ from streamlit_folium import folium_static
 st.set_page_config(page_title="📍 Traffic Density Map", layout="wide")
 st.title("🚦 Traffic Density Visualization from Dataset")
 
+st.markdown("""
+This project uses a dataset containing urban traffic sensor readings (e.g., vehicle counts, speeds, and contextual factors) to build machine learning models for predicting traffic density. 
+
+The models will uncover **mobility insights**, such as how weather, peak hours, or random events affect traffic conditions across cities like **New York, Los Angeles, and Chicago**. 
+
+These insights can guide:
+- 🚦 Traffic signal optimization
+- 🚗 Route planning
+- 🏛️ Urban mobility policy decisions
+""")
+
 # Load the static dataset (dt.csv)
 @st.cache_data
 def load_data():
