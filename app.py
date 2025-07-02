@@ -17,6 +17,14 @@ uploaded_file = st.file_uploader("📁 Upload your traffic dataset (CSV)", type=
 @st.cache_data
 def load_data(file):
     df = pd.read_csv(file)
+    st.write("📌 Detected columns:", df.columns.tolist())  # Debug: show available columns
+
+    # Required columns
+    required_cols = ['City', 'Traffic Density', 'Speed', 'Vehicle Count', 'Hour Of Day', 'Energy Consumption']
+    missing_cols = [col for col in required_cols if col not in df.columns]
+    if missing_cols:
+        st.error(f"❌ Your CSV is missing the following columns: {missing_cols}")
+        st.stop()
 
     # Normalize city names
     df['City'] = df['City'].str.strip().str.title()
@@ -82,4 +90,4 @@ if uploaded_file is not None:
 
     folium_static(m)
 else:
-    st.warning("Please upload a valid CSV file with City, Traffic Density, Speed, Vehicle Count, Hour Of Day, and Energy Consumption columns.")
+    st.warning("Please upload a valid CSV file with required columns including City, Traffic Density, Speed, Vehicle Count, Hour Of Day, and Energy Consumption.")
