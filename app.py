@@ -40,9 +40,8 @@ if uploaded_file is not None:
     df['Weight'] = df['Traffic Density'].map(density_map)
 
     st.subheader("🗺️ Interactive Traffic Map")
-    theme = st.selectbox("Choose Map Theme", ["OpenStreetMap", "CartoDB positron", "Stamen Toner", "Stamen Terrain"])
     map_center = [df['Latitude'].mean(), df['Longitude'].mean()]
-    m = folium.Map(location=map_center, zoom_start=5, tiles=theme)
+    m = folium.Map(location=map_center, zoom_start=5)
 
     heat_data = [[row['Latitude'], row['Longitude'], row['Weight']] for _, row in df.iterrows()]
     HeatMap(heat_data, radius=15, blur=10, min_opacity=0.3).add_to(m)
