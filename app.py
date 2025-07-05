@@ -7,28 +7,27 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
 
-# Set Streamlit page settings
-st.set_page_config(page_title="📍 Traffic Density Map", layout="wide")
-st.title("🚦 Traffic Density Visualization & Prediction")
+st.set_page_config(page_title="📍 Traffic Density Prediction App", layout="wide")
+st.title("🚦 Traffic Density Prediction and Mapping")
 
-# Upload CSV
 uploaded_file = st.file_uploader("📁 Upload your traffic dataset (CSV)", type=["csv"])
 
 @st.cache_data
 def load_data(file):
     df = pd.read_csv(file)
-    st.write("📌 Detected columns:", df.columns.tolist())  # Debug: show available columns
+    st.write("📌 Detected columns:", df.columns.tolist())
 
-    # Required columns
+    # Check for required columns
     required_cols = ['City', 'Traffic Density', 'Speed', 'Hour Of Day', 'Energy Consumption']
     missing_cols = [col for col in required_cols if col not in df.columns]
     if missing_cols:
-        st.error(f"❌ Your CSV is missing the following columns: {missing_cols}")
+        st.error(f"❌ Your CSV is missing required columns: {missing_cols}")
         st.stop()
 
-    # Normalize city names
+    # Normalize City names
     df['City'] = df['City'].str.strip().str.title()
 
+    # Simulate GPS coordinates
     city_to_coords = {
         'New York': (40.7128, -74.0060),
         'Los Angeles': (34.0522, -118.2437),
@@ -43,11 +42,12 @@ def load_data(file):
 if uploaded_file is not None:
     df = load_data(uploaded_file)
 
-    # Map traffic density to weights and colors
+    # Density mappings
     density_map = {'Low': 1, 'Medium': 2, 'High': 3}
     color_map = {'Low': 'green', 'Medium': 'orange', 'High': 'red'}
     df['Weight'] = df['Traffic Density'].map(density_map)
 
+    # Data preview
     with st.expander("🔍 Preview Data"):
         st.dataframe(df[['City', 'Traffic Density', 'Speed', 'Hour Of Day', 'Energy Consumption', 'Latitude', 'Longitude']])
 
@@ -65,29 +65,26 @@ if uploaded_file is not None:
     st.text("Classification Report")
     st.text(classification_report(y_test, y_pred))
 
-    # Custom Map Theme
+    # Map section
     st.subheader("🗺️ Interactive Traffic Map")
-    theme = st.selectbox("🗺️ Choose Map Theme", ["OpenStreetMap", "CartoDB positron", "Stamen Toner", "Stamen Terrain"])
-
+    theme = st.selectbox("Choose Map Theme", ["OpenStreetMap", "CartoDB positron", "Stamen Toner", "Stamen Terrain"])
     map_center = [df['Latitude'].mean(), df['Longitude'].mean()]
     m = folium.Map(location=map_center, zoom_start=5, tiles=theme)
 
-    # Heatmap Layer
     heat_data = [[row['Latitude'], row['Longitude'], row['Weight']] for _, row in df.iterrows()]
     HeatMap(heat_data, radius=15, blur=10, min_opacity=0.3).add_to(m)
 
-    # Circle Markers
     for _, row in df.iterrows():
         folium.CircleMarker(
             location=[row['Latitude'], row['Longitude']],
             radius=6,
-            color=color_map[row['Traffic Density']],
+            color=color_map.get(row['Traffic Density'], 'gray'),
             fill=True,
-            fill_color=color_map[row['Traffic Density']],
             fill_opacity=0.8,
             popup=f"{row['City']} - {row['Traffic Density']}"
         ).add_to(m)
 
     folium_static(m)
+
 else:
-    st.warning("Please upload a valid CSV file with required columns including City, Traffic Density, Speed, Hour Of Day, and Energy Consumption.")
+    st.info("Please upload a CSV file to begin.")
