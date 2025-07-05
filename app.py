@@ -3,31 +3,24 @@ import pandas as pd
 import folium
 from folium.plugins import HeatMap
 from streamlit_folium import folium_static
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report
 
-st.set_page_config(page_title="📍 Traffic Density Prediction App", layout="wide")
-st.title("🚦 Traffic Density Prediction and Mapping")
+st.set_page_config(page_title="📍 Traffic Density Map", layout="wide")
+st.title("🚦 Traffic Density Mapping")
 
 uploaded_file = st.file_uploader("📁 Upload your traffic dataset (CSV)", type=["csv"])
 
 @st.cache_data
 def load_data(file):
     df = pd.read_csv(file)
-    st.write("📌 Detected columns:", df.columns.tolist())
 
-    # Check for required columns
     required_cols = ['City', 'Traffic Density', 'Speed', 'Hour Of Day', 'Energy Consumption']
     missing_cols = [col for col in required_cols if col not in df.columns]
     if missing_cols:
         st.error(f"❌ Your CSV is missing required columns: {missing_cols}")
         st.stop()
 
-    # Normalize City names
     df['City'] = df['City'].str.strip().str.title()
 
-    # Simulate GPS coordinates
     city_to_coords = {
         'New York': (40.7128, -74.0060),
         'Los Angeles': (34.0522, -118.2437),
@@ -42,30 +35,10 @@ def load_data(file):
 if uploaded_file is not None:
     df = load_data(uploaded_file)
 
-    # Density mappings
     density_map = {'Low': 1, 'Medium': 2, 'High': 3}
     color_map = {'Low': 'green', 'Medium': 'orange', 'High': 'red'}
     df['Weight'] = df['Traffic Density'].map(density_map)
 
-    # Data preview
-    with st.expander("🔍 Preview Data"):
-        st.dataframe(df[['City', 'Traffic Density', 'Speed', 'Hour Of Day', 'Energy Consumption', 'Latitude', 'Longitude']])
-
-    # ML Prediction
-    st.subheader("🤖 Predict Traffic Density")
-    features = ['Speed', 'Hour Of Day', 'Energy Consumption']
-    X = df[features]
-    y = df['Traffic Density']
-
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42)
-    model = RandomForestClassifier()
-    model.fit(X_train, y_train)
-    y_pred = model.predict(X_test)
-
-    st.text("Classification Report")
-    st.text(classification_report(y_test, y_pred))
-
-    # Map section
     st.subheader("🗺️ Interactive Traffic Map")
     theme = st.selectbox("Choose Map Theme", ["OpenStreetMap", "CartoDB positron", "Stamen Toner", "Stamen Terrain"])
     map_center = [df['Latitude'].mean(), df['Longitude'].mean()]
@@ -85,6 +58,5 @@ if uploaded_file is not None:
         ).add_to(m)
 
     folium_static(m)
-
 else:
-    st.info("Please upload a CSV file to begin.")
+    st.info("Please upload a CSV file to visualize traffic density on the map.")
